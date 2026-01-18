@@ -5,8 +5,8 @@
 openova provides a production-ready kubernetes infrastructure with:
 
 - **K3s Cluster** on Contabo VPS (3-node HA with etcd quorum)
-- **Istio Ambient Mode** for sidecar-less service mesh
-- **Cilium CNI** with eBPF networking and Hubble observability
+- **Cilium Service Mesh** with eBPF networking, WireGuard mTLS, and Hubble observability
+- **Gitea** for self-hosted Git with bidirectional mirroring
 - **Flux GitOps** for declarative continuous delivery
 - **Grafana LGTM Stack** for unified observability (Loki, Grafana, Tempo, Mimir)
 
@@ -22,8 +22,9 @@ openova provides a production-ready kubernetes infrastructure with:
 
 | Repository | Category | Purpose |
 |------------|----------|---------|
-| [istio](https://github.com/openova-io/istio) | network | Service mesh and ingress |
-| [cilium](https://github.com/openova-io/cilium) | network | eBPF CNI with Hubble |
+| [cilium](https://github.com/openova-io/cilium) | network | CNI + Service Mesh with eBPF |
+| [gitea](https://github.com/openova-io/gitea) | platform | Self-hosted Git server |
+| [k8gb](https://github.com/openova-io/k8gb) | network | Global Server Load Balancing |
 | [stunner](https://github.com/openova-io/stunner) | network | K8s-native TURN server |
 | [cnpg](https://github.com/openova-io/cnpg) | database | PostgreSQL operator |
 | [mongodb](https://github.com/openova-io/mongodb) | database | MongoDB operator |
@@ -34,7 +35,7 @@ openova provides a production-ready kubernetes infrastructure with:
 | [grafana](https://github.com/openova-io/grafana) | observability | LGTM stack (Loki, Tempo, Mimir) |
 | [keda](https://github.com/openova-io/keda) | autoscaling | Event-driven autoscaling |
 | [kyverno](https://github.com/openova-io/kyverno) | security | Policy engine |
-| [external-secrets](https://github.com/openova-io/external-secrets) | security | Secrets management (ESO + Infisical) |
+| [external-secrets](https://github.com/openova-io/external-secrets) | security | Secrets management (ESO + Vault) |
 | [cert-manager](https://github.com/openova-io/cert-manager) | security | TLS certificate automation |
 | [stalwart](https://github.com/openova-io/stalwart) | workplace | Self-hosted email server |
 
