@@ -50,9 +50,32 @@ openova/
 
 ## Platform Components (41)
 
-All components flat under `platform/`:
+All components under `platform/` (flat structure):
 
-anthropic-adapter, backstage, bge, cert-manager, cilium, cnpg, crossplane, external-dns, external-secrets, failover-controller, flux, gitea, grafana, harbor, k8gb, keda, keycloak, knative, kserve, kyverno, lago, langserve, librechat, llm-gateway, milvus, minio, mongodb, n8n, neo4j, openmeter, redpanda, searxng, stalwart, stunner, terraform, trivy, valkey, vault, velero, vllm, vpa
+### Mandatory (Core Platform)
+
+| Category | Components |
+|----------|------------|
+| **Infrastructure** | terraform, crossplane |
+| **GitOps & IDP** | flux, gitea, backstage |
+| **Networking** | cilium, external-dns, k8gb, stunner |
+| **Security** | cert-manager, external-secrets, vault, trivy |
+| **Policy** | kyverno |
+| **Observability** | grafana |
+| **Scaling** | vpa, keda |
+| **Storage** | minio, velero |
+| **Registry** | harbor |
+| **Failover** | failover-controller |
+
+### A La Carte (Optional)
+
+| Category | Components |
+|----------|------------|
+| **Data** | cnpg, mongodb, valkey, redpanda |
+| **Identity** | keycloak |
+| **Communication** | stalwart |
+| **Monetization** | openmeter, lago |
+| **AI/ML** | knative, kserve, vllm, milvus, neo4j, langserve, librechat, n8n, searxng, bge, llm-gateway, anthropic-adapter |
 
 ---
 
