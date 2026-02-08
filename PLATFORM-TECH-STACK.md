@@ -64,6 +64,63 @@ flowchart TB
 | Terraform | Bootstrap IaC (initial cluster only) | [terraform](https://github.com/openova-io/terraform) |
 | Crossplane | Day-2 cloud resource provisioning | [crossplane](https://github.com/openova-io/crossplane) |
 
+#### Terraform → Crossplane Handoff
+
+OpenOva uses a **two-phase provisioning model** where Terraform bootstraps the initial infrastructure, then Crossplane takes over for all subsequent operations.
+
+```mermaid
+flowchart LR
+    subgraph Phase1["Phase 1: Bootstrap (Terraform)"]
+        TF[Terraform]
+        VMs[VMs/Nodes]
+        Net[Network]
+        K8s[K8s Cluster]
+    end
+
+    subgraph Phase2["Phase 2: Day-2+ (Crossplane)"]
+        CP[Crossplane]
+        XR[Compositions]
+        Cloud[Cloud Resources]
+    end
+
+    subgraph Deleted["After Bootstrap"]
+        TFState[Terraform State]
+    end
+
+    TF --> VMs
+    TF --> Net
+    TF --> K8s
+    K8s --> CP
+    CP --> XR
+    XR --> Cloud
+    TF -.->|"Can be deleted"| TFState
+```
+
+**Phase 1 - Bootstrap (Terraform):**
+- Provisions initial VMs/nodes
+- Creates network infrastructure (VPC, subnets, firewall rules)
+- Installs K3s cluster
+- Installs Flux, which then installs all platform components including Crossplane
+- **Terraform's job ends here** - state can be archived or deleted
+
+**Phase 2 - Day-2 Operations (Crossplane):**
+- All subsequent cloud resources managed via Kubernetes CRDs
+- Continuous reconciliation (drift detection and correction)
+- GitOps-native (resources defined in Git, applied by Flux)
+- Self-service via Backstage templates
+
+**Why This Model:**
+
+| Aspect | Terraform | Crossplane |
+|--------|-----------|------------|
+| When | One-time bootstrap | Ongoing operations |
+| State | External file (risk) | Kubernetes CRDs (native) |
+| Drift | Manual detection | Continuous reconciliation |
+| Access | CI/CD credentials | Kubernetes RBAC |
+| Self-service | Requires pipeline | Native via CRDs |
+
+**Key Principle:** The bootstrap wizard (Terraform) is designed to be **safely deletable** after initial provisioning. Crossplane owns all cloud resources going forward, making the platform self-sustaining without external IaC state.
+
 ### Networking & Service Mesh
 
 | Component | Purpose | Repository |
