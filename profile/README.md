@@ -10,9 +10,9 @@ OpenOva provides a converged blueprint ecosystem with operational guarantees, en
 
 | Document | Description |
 |----------|-------------|
-| [Platform Tech Stack](PLATFORM-TECH-STACK.md) | Technology stack overview |
-| [Repository Structure](REPOSITORY-STRUCTURE.md) | Repository organization |
-| [SRE Handbook](SRE.md) | Site reliability practices |
+| [Platform Tech Stack](../PLATFORM-TECH-STACK.md) | Technology stack overview |
+| [Repository Structure](../REPOSITORY-STRUCTURE.md) | Repository organization |
+| [SRE Handbook](../SRE.md) | Site reliability practices |
 
 ---
 
