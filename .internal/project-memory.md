@@ -1,6 +1,6 @@
 # OpenOva Project Memory
 
-> Last Updated: 2026-01-17
+> Last Updated: 2026-02-08
 > Purpose: Persistent context for Claude Code sessions about OpenOva platform strategy and architecture
 
 ---
@@ -770,6 +770,406 @@ acme-private/                  # Example private instance
 - Upbound (Crossplane ecosystem)
 - Humanitec (Platform orchestrator)
 - Loft/vCluster (Multi-tenancy)
+
+---
+
+## 17. Monorepo Strategy (2026-02-08)
+
+### Decision: GitHub Monorepo with Gitea Multi-Repo Sync
+
+**GitHub Structure:**
+```
+openova-io/openova (single monorepo)
+├── core/                    # Bootstrap + Lifecycle Manager application
+├── platform/                # Individual component blueprints
+│   ├── cilium/
+│   ├── flux/
+│   ├── grafana/
+│   └── ...
+└── meta-platforms/          # Bundled vertical solutions
+    ├── ai-hub/
+    └── open-banking/
+```
+
+**Customer's Gitea Structure (synced):**
+```
+gitea.customer.io/
+├── openova-core/            # Synced from core/
+├── openova-cilium/          # Synced from platform/cilium/
+├── openova-flux/            # Synced from platform/flux/
+└── ...
+```
+
+**Rationale:**
+- Single monorepo on GitHub for visibility, stars, and contributor attraction
+- Bidirectional sync to customer's Gitea as multi-repo (operational flexibility)
+- Releases and tags on monorepo; customer sees atomic updates
+
+### Naming Clarification
+
+| Term | Meaning |
+|------|---------|
+| **Platform** | Individual component blueprints (cilium, flux, grafana, etc.) |
+| **Meta-Platform** | Bundled vertical solutions (AI Hub, Open Banking) |
+| **Blueprint** | Generic term - everything in platform/ and meta-platforms/ are blueprints |
+
+---
+
+## 18. Core Application Architecture (2026-02-08)
+
+### Overview
+
+OpenOva Core is a single Go application with two deployment modes:
+- **Bootstrap Mode**: Runs outside cluster (SaaS or self-hosted)
+- **Manager Mode**: Runs inside customer's Kubernetes cluster
+
+### Directory Structure
+
+```
+core/
+├── apps/                           # Web applications (NOT cmd/)
+│   ├── bootstrap/                  # Web app: runs outside cluster
+│   │   ├── main.go
+│   │   ├── handlers/               # HTTP handlers
+│   │   ├── terraform/              # Embedded Terraform modules
+│   │   └── Dockerfile
+│   └── manager/                    # Web app: runs inside cluster
+│       ├── main.go
+│       ├── handlers/               # HTTP handlers
+│       ├── controllers/            # K8s controllers (watch-based)
+│       └── Dockerfile
+├── internal/
+│   ├── domain/                     # Core business logic (zero deps)
+│   │   ├── platform/               # Platform entities
+│   │   ├── component/              # Component entities
+│   │   └── events/                 # Domain events
+│   ├── application/                # Use cases / orchestration
+│   │   ├── bootstrap/              # Bootstrap use cases
+│   │   ├── lifecycle/              # Lifecycle use cases
+│   │   └── upgrade/                # Upgrade use cases
+│   ├── adapters/                   # Infrastructure adapters
+│   │   ├── kubernetes/             # K8s client adapter
+│   │   ├── terraform/              # Terraform executor
+│   │   ├── crossplane/             # Crossplane adapter
+│   │   └── git/                    # Git operations
+│   ├── events/                     # In-memory event bus
+│   │   ├── bus.go                  # Go channels event bus
+│   │   └── handlers/               # Event handlers
+│   └── config/                     # Configuration
+├── pkg/                            # Public API types (CRDs, shared types)
+│   ├── apis/                       # CRD definitions
+│   └── client/                     # Generated clients
+├── ui/                             # Shared React frontend
+│   ├── src/
+│   │   ├── components/             # Shared components
+│   │   ├── pages/
+│   │   │   ├── bootstrap/          # Bootstrap wizard pages
+│   │   │   └── manager/            # Lifecycle manager pages
+│   │   └── hooks/                  # Custom hooks
+│   └── package.json
+└── deploy/                         # K8s manifests for manager
+    ├── base/
+    └── overlays/
+```
+
+### Zero External Dependencies Design
+
+**Bootstrap Mode (runs outside cluster):**
+
+| Need | Solution |
+|------|----------|
+| Database | SQLite (embedded, temporary) |
+| Event Bus | Go channels (in-memory) |
+| Caching | Go sync.Map / in-memory |
+| Session | JWT + cookie (stateless) |
+| Terraform State | S3 backend (customer's archival S3) |
+
+**Manager Mode (runs inside cluster):**
+
+| Need | Solution |
+|------|----------|
+| State | Kubernetes CRDs (K8s is the database) |
+| Event Bus | Go channels + K8s watch events |
+| Caching | informer cache (client-go) |
+| Reconciliation | controller-runtime |
+| Cross-Cluster | Kubernetes API (multi-cluster contexts) |
+
+### Architecture Patterns
+
+**Hexagonal Architecture (Ports & Adapters):**
+```
+                    +-------------------+
+   HTTP Handlers -> |                   | -> Kubernetes
+   K8s Controllers->|   Domain Logic    | -> Terraform
+   Event Bus -----> |   (Pure Go)       | -> Git
+                    +-------------------+
+```
+
+**Event-Driven Flow:**
+```go
+// Domain emits events
+domain.EmitEvent(ComponentInstallRequested{...})
+
+// Event bus routes to handlers
+bus.Subscribe(ComponentInstallRequested{}, func(e Event) {
+    // Orchestrate via Crossplane
+})
+```
+
+**K8s Native Design (Manager):**
+```go
+// Custom Resource
+type Platform struct {
+    Spec   PlatformSpec   // Desired state
+    Status PlatformStatus // Current state
+}
+
+// Controller reconciles desired vs actual
+func (r *Reconciler) Reconcile(ctx, req) {
+    // Watch-based, no polling
+    // CRD is single source of truth
+}
+```
+
+### Why This Architecture
+
+| Principle | Implementation |
+|-----------|---------------|
+| No CNPG dependency | SQLite for bootstrap, CRDs for manager |
+| No Valkey dependency | Go maps, K8s informer cache |
+| No Redpanda dependency | Go channels, K8s watch events |
+| Light footprint | Single binary, minimal resources |
+| Cloud-native | K8s-native patterns in manager |
+| Testable | Domain has zero dependencies |
+| Portable | Bootstrap runs anywhere (laptop, CI, cloud) |
+
+---
+
+## 19. Bootstrap vs Lifecycle Manager (2026-02-08)
+
+### Relationship
+
+Same codebase, two deployment modes:
+
+| Aspect | Bootstrap | Lifecycle Manager |
+|--------|-----------|-------------------|
+| Location | Outside cluster (OpenOva SaaS or self-hosted) | Inside customer's K8s |
+| Purpose | Initial provisioning | Day-2 operations |
+| IaC Tool | Terraform | Crossplane |
+| State | SQLite (temporary) | K8s CRDs (persistent) |
+| Lifespan | Exits after bootstrap | Long-running |
+| Entry Point | `apps/bootstrap/main.go` | `apps/manager/main.go` |
+
+### User Journey
+
+```
+1. User accesses Bootstrap UI (SaaS or self-hosted)
+   └─> Wizard collects: cloud provider, credentials, options
+
+2. Bootstrap provisions via Terraform
+   └─> K8s cluster + Flux + Gitea + core components
+
+3. Bootstrap deploys Lifecycle Manager into cluster
+   └─> Manager starts watching CRDs
+
+4. Bootstrap returns Lifecycle Manager URL
+   └─> User sees installation progress in Manager UI
+
+5. Manager completes remaining installations via Crossplane
+   └─> All a la carte components, meta-platforms
+
+6. Manager provides links to:
+   └─> Backstage, Grafana, Gitea, other services
+```
+
+### Self-Hosted Bootstrap Option
+
+For customers who cannot use SaaS bootstrap:
+
+```bash
+# Download bootstrap as container/binary
+curl -sL bootstrap.openova.io/install | bash
+
+# Run locally (your credentials never leave your machine)
+openova-bootstrap serve --port 8080
+
+# Access wizard at localhost:8080
+# Same UI, same experience, runs on your laptop/VM
+```
+
+### No Overlap with Backstage
+
+| System | Users | Purpose |
+|--------|-------|---------|
+| **Lifecycle Manager** | Platform operators | Install/upgrade/configure platform components |
+| **Backstage** | Application developers | Deploy apps, request databases, view catalog |
+
+**Lifecycle Manager manages Backstage itself** - they are different layers:
+- Lifecycle Manager: "Enable Backstage", "Upgrade Backstage to v1.30"
+- Backstage: "Deploy my-app", "Create PostgreSQL database"
+
+---
+
+## 20. Lifecycle Manager UI Concepts (2026-02-08)
+
+### Main Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ OpenOva Lifecycle Manager                    [Cluster: prod]│
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Platform Health: ██████████ 100%                          │
+│                                                             │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
+│  │ Components  │ │ Upgrades    │ │ Alerts      │           │
+│  │     24      │ │   2 avail   │ │     0       │           │
+│  └─────────────┘ └─────────────┘ └─────────────┘           │
+│                                                             │
+│  Quick Links:                                               │
+│  [Backstage] [Grafana] [Gitea] [Vault] [Harbor]            │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Components View
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Components                    [x] Show installed only       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  MANDATORY (Core Platform)                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ ✓ Cilium       v1.16.2  ● Healthy                   │  │
+│  │ ✓ Flux         v2.4.0   ● Healthy                   │  │
+│  │ ✓ Grafana      v11.3.0  ● Healthy                   │  │
+│  │ ✓ Backstage    v1.30.0  ● Healthy   [Upgrade: 1.31] │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+│  A LA CARTE (Optional)                                      │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ ✓ CNPG         v1.24.0  ● Healthy                   │  │
+│  │ ✓ Valkey       v8.0.0   ● Healthy                   │  │
+│  │ ○ MongoDB      ---      [+ Install]                  │  │
+│  │ ○ Redpanda     ---      [+ Install]                  │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+│  META-PLATFORMS                                             │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │ ○ AI Hub       ---      [+ Install]                  │  │
+│  │ ○ Open Banking ---      [+ Install]                  │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Install Flow with Dependencies
+
+When user clicks "[+ Install] AI Hub":
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Install: AI Hub                                     [x]     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  AI Hub requires the following components:                  │
+│                                                             │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │ ✓ KServe          (required)    [will be installed] │    │
+│  │ ✓ Knative         (required)    [will be installed] │    │
+│  │ ✓ vLLM            (required)    [will be installed] │    │
+│  │ ✓ Milvus          (required)    [will be installed] │    │
+│  │ ✓ CNPG            (required)    [already installed] │    │
+│  └────────────────────────────────────────────────────┘    │
+│                                                             │
+│  Optional components:                                       │
+│  [ ] Neo4j           (graph database for knowledge graph)  │
+│  [ ] LangServe       (RAG service)                         │
+│                                                             │
+│                              [Cancel]  [Install AI Hub]    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Upgrade Flow
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Available Upgrades                                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │ Backstage   v1.30.0 → v1.31.0                      │    │
+│  │ ─────────────────────────────────────────────────  │    │
+│  │ • New software templates                           │    │
+│  │ • Improved search performance                      │    │
+│  │ • Security patches                                 │    │
+│  │                                                     │    │
+│  │ [View Changelog]           [Schedule] [Upgrade Now]│    │
+│  └────────────────────────────────────────────────────┘    │
+│                                                             │
+│  ┌────────────────────────────────────────────────────┐    │
+│  │ Grafana     v11.3.0 → v11.4.0                      │    │
+│  │ ─────────────────────────────────────────────────  │    │
+│  │ • Dashboard improvements                           │    │
+│  │ • New Loki query builder                           │    │
+│  │                                                     │    │
+│  │ [View Changelog]           [Schedule] [Upgrade Now]│    │
+│  └────────────────────────────────────────────────────┘    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 21. No Overlap Analysis (2026-02-08)
+
+### Lifecycle Manager vs OSS Components
+
+| OSS Component | Their Purpose | Lifecycle Manager Purpose | Overlap? |
+|---------------|---------------|---------------------------|----------|
+| **Backstage** | Developer portal, service catalog, scaffolding | Platform component management, upgrades | **No** - different users (devs vs ops) |
+| **Crossplane** | Cloud resource provisioning via CRDs | Orchestrates Crossplane for component installs | **No** - LM uses Crossplane as tool |
+| **Flux** | GitOps delivery, reconciliation | Orchestrates what Flux deploys | **No** - LM manages Flux configs |
+| **ArgoCD** | GitOps delivery (alternative to Flux) | Same relationship as Flux | **No** |
+| **Terraform** | Infrastructure provisioning | Uses Terraform for bootstrap only | **No** - handoff after bootstrap |
+| **Helm** | Package management | May use Helm charts internally | **No** - LM orchestrates charts |
+
+### User Separation
+
+```
+Platform Operators (use Lifecycle Manager)
+├── Install/upgrade platform components
+├── Configure platform settings
+├── Manage multi-region setup
+├── Handle platform incidents
+└── Plan capacity
+
+Application Developers (use Backstage)
+├── Deploy applications
+├── Request databases/caches
+├── View service catalog
+├── Create new services from templates
+└── View application health
+```
+
+### Clear Boundaries
+
+**Lifecycle Manager manages:**
+- What components are installed
+- What versions are running
+- Platform-level configuration
+- Upgrade orchestration
+- Cross-cluster operations
+
+**Backstage manages:**
+- Application deployments
+- Service catalog entries
+- Developer self-service
+- Documentation
+- Software templates
+
+**Key Insight:** Lifecycle Manager manages Backstage itself. If someone needs to upgrade Backstage from v1.30 to v1.31, they use Lifecycle Manager, not Backstage.
 
 ---
 
