@@ -2,13 +2,13 @@
 
 Technology stack for the OpenOva Kubernetes platform.
 
-**Status:** Accepted | **Updated:** 2026-02-07
+**Status:** Accepted | **Updated:** 2026-02-08
 
 ---
 
 ## Overview
 
-Components are categorized as **Mandatory** (always installed) or **User Choice** (options available).
+Components are categorized as **Mandatory** (always installed), **A La Carte** (optional services), and **Meta Blueprints** (vertical solutions bundling components with custom services).
 
 ---
 
@@ -59,69 +59,69 @@ flowchart TB
 
 ### Infrastructure & Provisioning
 
-| Component | Purpose |
-|-----------|---------|
-| Terraform | Bootstrap IaC (initial cluster only) |
-| Crossplane | Day-2 cloud resource provisioning |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| Terraform | Bootstrap IaC (initial cluster only) | [terraform](https://github.com/openova-io/terraform) |
+| Crossplane | Day-2 cloud resource provisioning | [crossplane](https://github.com/openova-io/crossplane) |
 
 ### Networking & Service Mesh
 
-| Component | Purpose |
-|-----------|---------|
-| Cilium | CNI + Service Mesh (eBPF, mTLS, L7) |
-| Coraza | WAF (OWASP CRS) |
-| ExternalDNS | DNS sync to provider |
-| k8gb | GSLB (authoritative DNS) |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| Cilium | CNI + Service Mesh (eBPF, mTLS, L7) | [cilium](https://github.com/openova-io/cilium) |
+| Coraza | WAF (OWASP CRS) | - |
+| ExternalDNS | DNS sync to provider | [external-dns](https://github.com/openova-io/external-dns) |
+| k8gb | GSLB (authoritative DNS) | [k8gb](https://github.com/openova-io/k8gb) |
 
 ### GitOps, Git & IDP
 
-| Component | Purpose |
-|-----------|---------|
-| Flux | GitOps engine |
-| Gitea | Internal Git + CI/CD |
-| Backstage | Developer portal |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| Flux | GitOps engine | [flux](https://github.com/openova-io/flux) |
+| Gitea | Internal Git + CI/CD | [gitea](https://github.com/openova-io/gitea) |
+| Backstage | Developer portal | [backstage](https://github.com/openova-io/backstage) |
 
 ### Security
 
-| Component | Purpose |
-|-----------|---------|
-| cert-manager | TLS certificates |
-| External Secrets (ESO) | Secrets operator |
-| Vault | Secrets backend (per cluster) |
-| Kyverno | Policy engine |
-| Trivy | Security scanning |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| cert-manager | TLS certificates | [cert-manager](https://github.com/openova-io/cert-manager) |
+| External Secrets (ESO) | Secrets operator | [external-secrets](https://github.com/openova-io/external-secrets) |
+| Vault | Secrets backend (per cluster) | [vault](https://github.com/openova-io/vault) |
+| Kyverno | Policy engine | [kyverno](https://github.com/openova-io/kyverno) |
+| Trivy | Security scanning | [trivy](https://github.com/openova-io/trivy) |
 
 ### Scaling
 
-| Component | Purpose |
-|-----------|---------|
-| VPA | Vertical autoscaling |
-| KEDA | Event-driven horizontal autoscaling |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| VPA | Vertical autoscaling | [vpa](https://github.com/openova-io/vpa) |
+| KEDA | Event-driven horizontal autoscaling | [keda](https://github.com/openova-io/keda) |
 
 ### Observability
 
-| Component | Purpose |
-|-----------|---------|
-| Grafana Alloy | Telemetry collector |
-| Loki | Log aggregation |
-| Mimir | Metrics storage |
-| Tempo | Distributed tracing |
-| Grafana | Visualization |
-| OpenTelemetry | Application tracing |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| Grafana Alloy | Telemetry collector | [grafana](https://github.com/openova-io/grafana) |
+| Loki | Log aggregation | [grafana](https://github.com/openova-io/grafana) |
+| Mimir | Metrics storage | [grafana](https://github.com/openova-io/grafana) |
+| Tempo | Distributed tracing | [grafana](https://github.com/openova-io/grafana) |
+| Grafana | Visualization | [grafana](https://github.com/openova-io/grafana) |
+| OpenTelemetry | Application tracing | - |
 
 ### Storage & Registry
 
-| Component | Purpose |
-|-----------|---------|
-| Harbor | Container registry + Trivy |
-| MinIO | Object storage |
-| Velero | Backup/restore |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| Harbor | Container registry + Trivy | [harbor](https://github.com/openova-io/harbor) |
+| MinIO | Object storage | [minio](https://github.com/openova-io/minio) |
+| Velero | Backup/restore | [velero](https://github.com/openova-io/velero) |
 
 ### Failover & Resilience
 
-| Component | Purpose |
-|-----------|---------|
-| Failover Controller | Failover orchestration |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| Failover Controller | Failover orchestration | [failover-controller](https://github.com/openova-io/failover-controller) |
 
 ---
 
@@ -174,32 +174,153 @@ flowchart TB
 
 ---
 
-## À La Carte Data Services
+## A La Carte Data Services
 
-| Component | Purpose | DR Strategy |
-|-----------|---------|-------------|
-| CNPG | PostgreSQL | WAL streaming |
-| MongoDB | Document database | CDC via Debezium |
-| Redpanda | Event streaming | MirrorMaker2 |
-| Valkey | Redis-compatible cache | REPLICAOF |
+| Component | Purpose | DR Strategy | Repository |
+|-----------|---------|-------------|------------|
+| CNPG | PostgreSQL | WAL streaming | [cnpg](https://github.com/openova-io/cnpg) |
+| MongoDB | Document database | CDC via Debezium | [mongodb](https://github.com/openova-io/mongodb) |
+| Redpanda | Event streaming | MirrorMaker2 | [redpanda](https://github.com/openova-io/redpanda) |
+| Valkey | Redis-compatible cache | REPLICAOF | [valkey](https://github.com/openova-io/valkey) |
 
 ---
 
-## À La Carte Communication
+## A La Carte Communication
 
-| Component | Purpose |
-|-----------|---------|
-| Stalwart | Email server |
-| STUNner | WebRTC gateway |
+| Component | Purpose | Repository |
+|-----------|---------|------------|
+| Stalwart | Email server | [stalwart](https://github.com/openova-io/stalwart) |
+| STUNner | WebRTC gateway | [stunner](https://github.com/openova-io/stunner) |
 
 ---
 
 ## Meta Blueprints
 
-| Blueprint | Purpose |
-|-----------|---------|
-| AI Hub | Enterprise AI platform (LLM, RAG, agents) |
-| Open Banking | Fintech sandbox (PSD2/FAPI) |
+Meta blueprints bundle a la carte components with custom services for specific verticals.
+
+### AI Hub
+
+Enterprise AI platform with LLM serving, RAG, and intelligent agents.
+
+```mermaid
+flowchart TB
+    subgraph UI["User Interfaces"]
+        LibreChat[LibreChat]
+        ClaudeCode[Claude Code]
+        n8n[n8n Workflows]
+    end
+
+    subgraph Gateway["Gateway Layer"]
+        LLMGateway[LLM Gateway]
+        Adapter[Anthropic Adapter]
+    end
+
+    subgraph RAG["RAG Layer"]
+        LangServe[LangServe]
+    end
+
+    subgraph Serving["Model Serving"]
+        Knative[Knative]
+        KServe[KServe]
+        vLLM[vLLM]
+    end
+
+    subgraph Knowledge["Knowledge Layer"]
+        Milvus[Milvus Vectors]
+        Neo4j[Neo4j Graph]
+    end
+
+    subgraph Embeddings["Embeddings"]
+        BGE[BGE-M3 + Reranker]
+    end
+
+    subgraph Search["Web Search"]
+        SearXNG[SearXNG]
+    end
+
+    UI --> Gateway
+    Gateway --> RAG
+    RAG --> Serving
+    RAG --> Knowledge
+    RAG --> Embeddings
+    RAG --> Search
+```
+
+#### AI Hub Components
+
+| Component | Purpose | Type | Repository |
+|-----------|---------|------|------------|
+| **ai-hub** | Meta blueprint | Blueprint | [ai-hub](https://github.com/openova-io/ai-hub) |
+| **llm-gateway** | Subscription proxy for Claude Code | Custom | [llm-gateway](https://github.com/openova-io/llm-gateway) |
+| **anthropic-adapter** | OpenAI ↔ Anthropic translation | Custom | [anthropic-adapter](https://github.com/openova-io/anthropic-adapter) |
+| knative | Serverless platform | A La Carte | [knative](https://github.com/openova-io/knative) |
+| kserve | Model serving | A La Carte | [kserve](https://github.com/openova-io/kserve) |
+| vllm | LLM inference (PagedAttention) | A La Carte | [vllm](https://github.com/openova-io/vllm) |
+| langserve | LangChain RAG service | A La Carte | [langserve](https://github.com/openova-io/langserve) |
+| milvus | Vector database | A La Carte | [milvus](https://github.com/openova-io/milvus) |
+| neo4j | Graph database | A La Carte | [neo4j](https://github.com/openova-io/neo4j) |
+| librechat | Chat UI | A La Carte | [librechat](https://github.com/openova-io/librechat) |
+| n8n | Workflow automation | A La Carte | [n8n](https://github.com/openova-io/n8n) |
+| searxng | Privacy-respecting web search | A La Carte | [searxng](https://github.com/openova-io/searxng) |
+| bge | Embeddings + reranking | A La Carte | [bge](https://github.com/openova-io/bge) |
+
+#### AI Hub Resource Requirements
+
+| Component | Replicas | CPU | Memory | GPU |
+|-----------|----------|-----|--------|-----|
+| vLLM | 1 | 4 | 32Gi | 2x A10 |
+| BGE-M3 | 1 | 2 | 4Gi | 1x A10 |
+| BGE-Reranker | 1 | 1 | 2Gi | 1x A10 |
+| Milvus | 3 | 2 | 8Gi | - |
+| Neo4j | 1 | 2 | 4Gi | - |
+| LangServe | 2 | 1 | 2Gi | - |
+| LibreChat | 2 | 0.5 | 1Gi | - |
+| LLM Gateway | 2 | 0.25 | 512Mi | - |
+| **Total** | - | ~15 | ~55Gi | 4x A10 |
+
+### Open Banking
+
+Fintech sandbox with PSD2/FAPI compliance.
+
+```mermaid
+flowchart LR
+    subgraph Gateway["API Gateway"]
+        Envoy[Envoy via Cilium]
+        ExtAuth[ext_authz]
+    end
+
+    subgraph Auth["Authorization"]
+        Keycloak[Keycloak FAPI]
+    end
+
+    subgraph Monetization["Monetization"]
+        OpenMeter[OpenMeter]
+        Lago[Lago Billing]
+        Valkey[Valkey Quota]
+    end
+
+    subgraph APIs["Open Banking APIs"]
+        AISP[AISP]
+        PISP[PISP]
+        TPP[TPP Management]
+    end
+
+    Envoy --> ExtAuth
+    ExtAuth --> Keycloak
+    ExtAuth --> Valkey
+    Valkey --> OpenMeter
+    OpenMeter --> Lago
+    Keycloak --> APIs
+```
+
+#### Open Banking Components
+
+| Component | Purpose | Type | Repository |
+|-----------|---------|------|------------|
+| **open-banking** | Meta blueprint | Blueprint | [open-banking](https://github.com/openova-io/open-banking) |
+| keycloak | FAPI Authorization Server | A La Carte | [keycloak](https://github.com/openova-io/keycloak) |
+| openmeter | Usage metering | A La Carte | [openmeter](https://github.com/openova-io/openmeter) |
+| lago | Billing and invoicing | A La Carte | [lago](https://github.com/openova-io/lago) |
 
 ---
 
@@ -249,7 +370,9 @@ helm install cilium cilium/cilium \
 
 ---
 
-## Resource Estimates (Per Region)
+## Resource Estimates
+
+### Core Platform (Per Region)
 
 | Category | Components | Estimated RAM |
 |----------|------------|---------------|
@@ -261,6 +384,16 @@ helm install cilium cilium/cilium \
 | **Minimum Total** | | ~12GB |
 
 **Recommended minimum:** 3 nodes × 8GB RAM = 24GB per region
+
+### With AI Hub (Per Region)
+
+| Category | Components | Estimated RAM | GPU |
+|----------|------------|---------------|-----|
+| Core Platform | (as above) | ~12GB | - |
+| AI Hub | LLM Gateway, LangServe, etc. | ~55GB | 4x A10 |
+| **Total** | | ~67GB | 4x A10 |
+
+**Recommended:** 3 CPU nodes + 2 GPU nodes per region
 
 ---
 
@@ -274,6 +407,7 @@ flowchart TB
         RP1[Redpanda]
         VK1[Valkey Primary]
         GT1[Gitea]
+        MV1[Milvus Primary]
     end
 
     subgraph Region2["Region 2 (DR)"]
@@ -282,6 +416,7 @@ flowchart TB
         RP2[Redpanda]
         VK2[Valkey Replica]
         GT2[Gitea]
+        MV2[Milvus Standby]
     end
 
     PG1 -->|"WAL Streaming"| PG2
@@ -290,6 +425,7 @@ flowchart TB
     RP2 -->|"Sink Connector"| MG2
     VK1 -->|"REPLICAOF"| VK2
     GT1 <-->|"Bidirectional Mirror"| GT2
+    MV1 -->|"Collection Sync"| MV2
 ```
 
 ---
