@@ -6,6 +6,16 @@ OpenOva provides a converged blueprint ecosystem with operational guarantees, en
 
 ---
 
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Platform Tech Stack](PLATFORM-TECH-STACK.md) | Technology stack overview |
+| [Repository Structure](REPOSITORY-STRUCTURE.md) | Repository organization |
+| [SRE Handbook](SRE.md) | Site reliability practices |
+
+---
+
 ## What We Provide
 
 | Offering | Description |
@@ -33,6 +43,7 @@ Bootstrap Wizard → Customer's K8s + Backstage + Flux + Gitea
 |------------|---------|
 | [bootstrap](https://github.com/openova-io/bootstrap) | Platform bootstrap wizard |
 | [terraform](https://github.com/openova-io/terraform) | Infrastructure as Code (bootstrap) |
+| [crossplane](https://github.com/openova-io/crossplane) | Day-2 cloud resource provisioning |
 | [flux](https://github.com/openova-io/flux) | GitOps configuration |
 
 ### Networking & Service Mesh
@@ -40,6 +51,7 @@ Bootstrap Wizard → Customer's K8s + Backstage + Flux + Gitea
 | Repository | Purpose |
 |------------|---------|
 | [cilium](https://github.com/openova-io/cilium) | CNI + Service Mesh (eBPF, mTLS) |
+| [external-dns](https://github.com/openova-io/external-dns) | DNS synchronization |
 | [k8gb](https://github.com/openova-io/k8gb) | Global Server Load Balancing |
 | [stunner](https://github.com/openova-io/stunner) | K8s-native TURN server |
 
@@ -80,6 +92,12 @@ Bootstrap Wizard → Customer's K8s + Backstage + Flux + Gitea
 |------------|---------|
 | [keda](https://github.com/openova-io/keda) | Event-driven autoscaling |
 | [vpa](https://github.com/openova-io/vpa) | Vertical Pod Autoscaler |
+
+### Failover & Resilience
+
+| Repository | Purpose |
+|------------|---------|
+| [failover-controller](https://github.com/openova-io/failover-controller) | Multi-region failover orchestration |
 
 ---
 
@@ -144,16 +162,6 @@ Fintech sandbox with PSD2/FAPI compliance.
 | Hetzner Cloud | Available |
 | Huawei Cloud | Coming Soon |
 | Oracle Cloud (OCI) | Coming Soon |
-
----
-
-## Documentation
-
-| Document | Description |
-|----------|-------------|
-| [Platform Tech Stack](PLATFORM-TECH-STACK.md) | Technology stack overview |
-| [Repository Structure](REPOSITORY-STRUCTURE.md) | Repository organization |
-| [SRE Handbook](SRE.md) | Site reliability practices |
 
 ---
 
